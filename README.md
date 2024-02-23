@@ -17,6 +17,9 @@ don't need it.
   as a label for classification purposes. Currently tracks of interest are
   hosted
   [here](https://drive.google.com/drive/folders/1CY2c7oW3KRPsyta-EyTlpvo8zeccQjCy).
+
+![](https://raw.githubusercontent.com/effusiveperiscope/PonySorter-B/main/docs/1.png)
+
 * Load an episode via the file menu (Ctrl+1).
 * If desired, you can filter audios by labeled noise level using the filter dialog (Ctrl+F).
 * Preview different processed audios using the buttons or keys `1-4`.
