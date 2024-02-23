@@ -24,7 +24,7 @@ don't need it.
     * The first save gives you the option to set the save as a default project,
       to be loaded on startup.
     * You can manually change the default project in `config.yaml`.
-* `File>Export data for current episode` will export into the `export` directory,
+* `File>Export data for current episode` will export into the `export` directory
   audacity label files AND automatically re-clipped audio, matching the file
   structure of the master file.
 * Multiple episodes can be modified in one project. `File>Export data for all`
