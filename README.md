@@ -10,11 +10,13 @@ don't need it.
   structure following that of the master file. master_file_2 is currently unused
   and can be left empty.
 
-* Add episode audios, processed and unprocessed in `in_audio`. They can be
-  located anywhere in a subdirectory of `in_audio` as long as they follow the
-  signature `s**e**_**optional tag**.flac`, e.g. `s01e01.flac` or
-  `s01e01_demu0.flac`. Text after the underscore is interpreted as a label for
-  classification purposes. Currently appropriate audios are hosted [here](https://drive.google.com/drive/folders/1CY2c7oW3KRPsyta-EyTlpvo8zeccQjCy).
+* Add episode tracks (i.e. `s01e01_demu0.flac`), processed and unprocessed, in
+  `in_audio`. They can be located anywhere in any subdirectory of `in_audio` as
+  long as they follow the signature `s**e**_*optional tag*.flac`, e.g.
+  `s01e01.flac` or `s01e01_demu0.flac`. Text after the underscore is interpreted
+  as a label for classification purposes. Currently tracks of interest are
+  hosted
+  [here](https://drive.google.com/drive/folders/1CY2c7oW3KRPsyta-EyTlpvo8zeccQjCy).
 * Load an episode via the file menu (Ctrl+1).
 * If desired, you can filter audios by labeled noise level using the filter dialog (Ctrl+F).
 * Preview different processed audios using the buttons or keys `1-4`.
@@ -32,6 +34,10 @@ don't need it.
   in mind this could take a long time with a larger amount of episodes.
 * I recommend making backups of project files since this software is not very
   well tested.
+
+# Denoising process
+* [Code used for index json generation from label files (see "generate_fim_episodes_labels_index")](https://github.com/effusiveperiscope/PPPDataset/blob/main/ppp.py)
+* [Code used to denoise](https://github.com/effusiveperiscope/PPPDataset/blob/main/episodes_demucs.ipynb)
 
 # Building (for Windows distribution)
 * `pyinstaller ponysorter_b.spec`
