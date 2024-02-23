@@ -2,4 +2,7 @@
 export
 dist
 build
+config.yaml
+1.json
 *.exe
+*.spec

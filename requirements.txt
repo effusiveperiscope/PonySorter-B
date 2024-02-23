@@ -1,0 +1,5 @@
+omegaconf
+pydub
+mmh3
+pygame
+PyQt5
