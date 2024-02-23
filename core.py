@@ -58,12 +58,15 @@ class PonySorter_B:
             logger.warn(f'No audios found in {conf["in_audio_dir"]}')
         if not os.path.exists(conf['index_file']):
             logger.warn(f'Index file {conf["index_file"]} not found')
-
-        with open(conf['index_file'], encoding='utf-8') as f:
-            self.labels_index = json.load(f)
+        else:
+            with open(conf['index_file'], encoding='utf-8') as f:
+                self.labels_index = json.load(f)
 
         self.modified_index = {}
         self.dirty_flag = False
+
+    def is_loaded(self):
+        return hasattr(self,'lines')
 
     def get_sigs(self):
         return self.audios_index.keys()
@@ -73,7 +76,9 @@ class PonySorter_B:
             'schema'] == 'episode']
 
     def key_transform(self, sig):
-        if self.audios_index[sig]['schema'] == 'episode':
+        if sig not in self.audios_index:
+            return sig
+        if self.audios_index[sig]['schema'] == 'episode': # keyerror 's01e01
             return sig_to_labels_key(sig)
         else:
             return sig
@@ -89,7 +94,10 @@ class PonySorter_B:
 
     def load_sig(self, sig, load_callback=None):
         if sig == self.loaded_sig: # no scenario where need to load twice
-            return len(self.lines)
+            return len(self.lines) 
+        if not hasattr(self, 'labels_index'):
+            logger.error(f'Cannot load if label index not available')
+            return 0
         self.loaded_sig = sig
         self.sources = {}
         self.lines = self.get_lines_for_sig(sig)
@@ -163,6 +171,16 @@ class PonySorter_B:
             save_dict = json.load(f)
         self.modified_index = save_dict.get('modified_index', {})
 
+        if not hasattr(self, 'labels_index'):
+            logger.error(f'Cannot load a project if label index not available')
+            return None, None
+
+        for sig,lines in self.modified_index.items():
+            key = self.key_transform(sig)
+            if key not in self.labels_index:
+                logger.error(f"Key {key} not in labels index")
+                return None, None
+
         for sig,lines in self.modified_index.items():
             key = self.key_transform(sig)
             for idx,line in lines.items():
@@ -172,6 +190,9 @@ class PonySorter_B:
 
     # Re-export audio in the same structure as the master file
     def export_audio(self, exp_dir, load_cb, sig_to_proc=[]):
+        if not self.is_loaded():
+            logger.warn("Nothing to export")
+            return
         os.makedirs(exp_dir, exist_ok=True)
         sig_ct = len(self.modified_index.items())
 
@@ -222,6 +243,9 @@ class PonySorter_B:
         self.load_sig(old_loaded_sig)
 
     def export_audacity_labels(self, exp_dir, load_cb, sig_to_proc=[]):
+        if not self.is_loaded():
+            logger.warn("Nothing to export")
+            return
         os.makedirs(exp_dir, exist_ok=True)
         new_index = copy.deepcopy(self.labels_index)
 

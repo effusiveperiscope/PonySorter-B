@@ -63,14 +63,14 @@ class PonySorter_B_GUI(QMainWindow):
                 sig_to_proc=[self.core.loaded_sig])
             self.core.export_audacity_labels(exp_dir, update_progress,
                 sig_to_proc=[self.core.loaded_sig])
-            logger.info(f'Exported audio, labels, index to {exp_dir}')
+            logger.info(f'Finished export')
 
         def export_all_audio():
             exp_dir = self.conf.get('exp_dir', 'export')
             os.makedirs(exp_dir, exist_ok=True)
             self.core.export_audio(exp_dir, update_progress)
             self.core.export_audacity_labels(exp_dir, update_progress)
-            logger.info(f'Exported audio, labels, index to {exp_dir}')
+            logger.info(f'Finished export')
 
         #def export_audacity_labels():
         #    exp_dir = self.conf.get('exp_dir', 'export')
@@ -298,7 +298,15 @@ class PonySorter_B_GUI(QMainWindow):
             return
         logger.info(f'Loading project {f}')
         add_data, save_dict = self.core.load_progress(f)
-        self.load_selection(save_dict['loaded_sig'], None)
+        if add_data is None:
+            logger.error(f'Failed to load from project {f}')
+            return
+        try:
+            self.load_selection(save_dict['loaded_sig'], None)
+        except KeyError:
+            logger.error(f'Failed to load from project {f}')
+            return
+
         self.set_view_idx(add_data.get('line_view_idx', self.line_view_idx))
         if 'filter_settings' in add_data:
             self.filter_settings = add_data.get('filter_settings')
@@ -329,6 +337,8 @@ class PonySorter_B_GUI(QMainWindow):
             return
         logger.info(f'Loading {sig}')
         self.line_ct = self.core.load_sig(sig, update_fn)
+        if self.line_ct == 0:
+            return
 
         self.rebuild_filter()
         self.rebuild_line_browser()
