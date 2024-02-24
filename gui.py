@@ -495,11 +495,11 @@ class PonySorter_B_GUI(QMainWindow):
         back_arrow.clicked.connect(nav_back)
         back_arrow.maximumWidth = 40
         back_arrow.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Minimum)
-        back_arrow.setShortcut('<')
+        back_arrow.setShortcut(',')
         forward_arrow = QPushButton('>') 
         forward_arrow.clicked.connect(nav_forward)
         forward_arrow.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Minimum)
-        forward_arrow.setShortcut('>')
+        forward_arrow.setShortcut('.')
         self.select_layout.addWidget(back_arrow)
         self.build_nav_buttons()
         self.select_layout.addWidget(forward_arrow)
