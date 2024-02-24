@@ -495,11 +495,11 @@ class PonySorter_B_GUI(QMainWindow):
         back_arrow.clicked.connect(nav_back)
         back_arrow.maximumWidth = 40
         back_arrow.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Minimum)
-        back_arrow.setShortcut(',')
+        back_arrow.setShortcut('<')
         forward_arrow = QPushButton('>') 
         forward_arrow.clicked.connect(nav_forward)
         forward_arrow.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Minimum)
-        forward_arrow.setShortcut('.')
+        forward_arrow.setShortcut('>')
         self.select_layout.addWidget(back_arrow)
         self.build_nav_buttons()
         self.select_layout.addWidget(forward_arrow)
@@ -516,6 +516,9 @@ class PonySorter_B_GUI(QMainWindow):
                 n.setChecked(False)
                 n.setEnabled(False)
             self.build_nav_buttons()
+            return
+        # No-op, some stray events emit invalid idx
+        if self.line_idx > len(self.core.lines):
             return
         self.line_browser.setCurrentRow(self.line_view_idx)
         sources, line, preview_segments = self.core.load_line(self.line_idx)
