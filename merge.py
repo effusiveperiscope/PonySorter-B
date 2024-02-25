@@ -59,6 +59,7 @@ def merge_dialog():
     def del_cb():
         index_list.takeItem(index_list.currentRow())
 
+    # TODO stats
     def merge_cb():
         orig_file = orig_button.file
         if not os.path.exists(orig_file):

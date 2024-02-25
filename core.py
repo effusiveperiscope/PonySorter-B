@@ -5,7 +5,8 @@ import shutil
 import copy
 from hashes import Hasher
 from pydub import AudioSegment
-from utils import sanitize_file_name, mergedicts, label_reparse, path_reparse
+from utils import (
+    sanitize_file_name, mergedicts, label_reparse, path_reparse, longpath)
 from pathlib import Path
 from log import logger
 from config import save_config
@@ -119,7 +120,8 @@ class PonySorter_B:
             elif chk == None:
                 logger.info(f"Note - no stored hash for {path}")
 
-            self.sources[tag] = AudioSegment.from_file(path)
+            self.sources[tag] = AudioSegment.from_file(
+                longpath(path))
             if load_callback is not None:
                 load_callback(int((i)/(len_items-1)*100))
         logger.info(f'Loaded {sig}')
@@ -135,7 +137,8 @@ class PonySorter_B:
         master_file_path = master_file_path.replace(
             'MASTER_FILE_2', self.conf['master_file_2'])
         preview_segments = OrderedDict()
-        preview_segments['master_ver'] = AudioSegment.from_file(master_file_path)
+        preview_segments['master_ver'] = AudioSegment.from_file(
+            longpath(master_file_path))
         for tag,source in self.sources.items():
             preview_segments[tag] = subsegment(source, line)
         if 'orig' in preview_segments:

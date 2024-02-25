@@ -1,4 +1,5 @@
 import re
+import os
 from pathlib import Path
 
 def sanitize_file_name(file_name):
@@ -46,3 +47,12 @@ def path_reparse(orig_file, parse_src):
 qwertymap0 = '1234567890'
 qwertymap1 = 'qwertyuiop'
 qwertymap2 = 'asdfghjkl;'
+
+def longpath(path):
+    import platform
+    path = os.path.abspath(path)
+    if 'Windows' in platform.system() and not path.startswith('\\\\?\\'):
+        path = u'\\\\?\\'+path.replace('/','\\')
+        return path
+    else:
+        return path
