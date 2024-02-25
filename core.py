@@ -224,7 +224,7 @@ class PonySorter_B:
                     'MASTER_FILE_2', self.conf['master_file_2']) 
                 orig_file_transcript = orig_file.removesuffix(
                     '..flac').removesuffix('.flac') + '.txt'
-                assert os.path.exists(orig_file_transcript), orig_file_transcript
+                assert os.path.exists(longpath(orig_file_transcript)), orig_file_transcript
 
                 save_path = path_reparse(line['orig_file'], line['parse'])
                 save_path = save_path.replace('\\','/')
@@ -235,14 +235,15 @@ class PonySorter_B:
 
                 # If master is used, just copy existing
                 if line['selected_tag'] == 'master_ver':
-                    shutil.copy(orig_file, save_path)
+                    shutil.copy(longpath(orig_file), longpath(save_path))
                 else:
                     segment_to_save = subsegment(
                         self.sources[line['selected_tag']], line)
-                    segment_to_save.export(save_path, format='flac')
+                    segment_to_save.export(longpath(save_path), format='flac')
 
                 save_path_transcript = save_path.removesuffix('.flac') + '.txt'
-                shutil.copy(orig_file_transcript, save_path_transcript)
+                shutil.copy(longpath(orig_file_transcript), 
+                    longpath(save_path_transcript))
         self.load_sig(old_loaded_sig)
 
     def export_audacity_labels(self, exp_dir, load_cb, sig_to_proc=[]):
