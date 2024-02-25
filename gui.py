@@ -11,6 +11,7 @@ import PyQt5
 import sys
 import io
 import os
+from merge import merge_dialog
 from log import display_handler, logger
 from core import PonySorter_B
 from utils import key_shift, qwertymap0, qwertymap1, qwertymap2
@@ -115,6 +116,9 @@ class PonySorter_B_GUI(QMainWindow):
         filter_action = self.menu_bar.addAction("Filter")
         filter_action.triggered.connect(filter_dialog)
         filter_action.setShortcut('Ctrl+F')
+
+        merge_action = self.menu_bar.addAction("Merge label indexes")
+        merge_action.triggered.connect(merge_dialog) # TODO
 
         main = QFrame()
         self.setCentralWidget(main)
