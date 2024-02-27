@@ -16,6 +16,7 @@ from log import display_handler, logger
 from core import PonySorter_B
 from utils import key_shift, qwertymap0, qwertymap1, qwertymap2
 from screenless import sl_hook
+from stats import stats_dialog
 
 class PonySorter_B_GUI(QMainWindow):
     def __init__(self, conf):
@@ -119,7 +120,10 @@ class PonySorter_B_GUI(QMainWindow):
         filter_action.setShortcut('Ctrl+F')
 
         merge_action = self.menu_bar.addAction("Merge label indexes")
-        merge_action.triggered.connect(merge_dialog) # TODO
+        merge_action.triggered.connect(merge_dialog) 
+
+        stats_action = self.menu_bar.addAction("View stats")
+        # deferred connect
 
         main = QFrame()
         self.setCentralWidget(main)
@@ -217,6 +221,8 @@ class PonySorter_B_GUI(QMainWindow):
         self.line_browser.setSelectionMode(QAbstractItemView.SingleSelection)
         self.line_browser.itemSelectionChanged.connect(line_browser_select)
         hlayout.addWidget(self.line_browser)
+
+        #stats_action.triggered.connect(partial(stats_dialog, self.core))  # TODO
 
         if len(conf['default_project']):
             self.load_from_project(conf['default_project'])

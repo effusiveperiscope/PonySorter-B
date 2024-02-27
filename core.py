@@ -62,6 +62,7 @@ class PonySorter_B:
         else:
             with open(conf['index_file'], encoding='utf-8') as f:
                 self.labels_index = json.load(f)
+                self.orig_labels_index = copy.deepcopy(self.labels_index)
 
         self.modified_index = {}
         self.dirty_flag = False
@@ -154,7 +155,8 @@ class PonySorter_B:
             self.lines[i] = dict(mergedicts(self.lines[i], add_data))
         if not self.loaded_sig in self.modified_index:
             self.modified_index[self.loaded_sig] = {}
-        self.modified_index[self.loaded_sig][i] = self.lines[i]
+        # Standardize index as str to avoid weird problems w/ json
+        self.modified_index[self.loaded_sig][str(i)] = self.lines[i]
         self.dirty_flag = True
         return self.lines[i]
 
@@ -253,6 +255,7 @@ class PonySorter_B:
         os.makedirs(exp_dir, exist_ok=True)
         new_index = copy.deepcopy(self.labels_index)
 
+        # Replay changes
         for i, sig in enumerate(self.modified_index.keys()):
             lines = self.get_lines_for_sig(sig, new_index)
 
