@@ -15,6 +15,7 @@ from merge import merge_dialog
 from log import display_handler, logger
 from core import PonySorter_B
 from utils import key_shift, qwertymap0, qwertymap1, qwertymap2
+from screenless import sl_hook
 
 class PonySorter_B_GUI(QMainWindow):
     def __init__(self, conf):
@@ -138,6 +139,7 @@ class PonySorter_B_GUI(QMainWindow):
         def noisy_callback(n):
             if self.line_ct == 0:
                 return
+            sl_hook(n.lower())
             if n == 'Clean':
                 n = ''
             r = self.core.edit_line(self.line_idx, None, 
@@ -434,6 +436,7 @@ class PonySorter_B_GUI(QMainWindow):
         new_nav_buttons_lay = QGridLayout(new_nav_buttons)
 
         def select_callback(tag):
+            sl_hook(tag)
             self.core.edit_line(self.line_idx, tag, None)
 
         def preview_callback(tag):

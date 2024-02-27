@@ -26,7 +26,8 @@ def load_config():
                 'master_ver': 'Master File Ver',
                 'orig': 'Original'
             },
-            'episode_pattern': r's(\d{2})e(\d{2})' # regex for matching ep names
+            'episode_pattern': r's(\d{2})e(\d{2})', # regex for matching ep names
+            'screenless_mode': False
         })
     return config
 
