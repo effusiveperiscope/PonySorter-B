@@ -58,4 +58,21 @@ def longpath(path):
         return path
 
 def transcript_transform_path(path):
-    return path.removesuffix('.flac').rstrip('.') + '.txt'
+    return path.removesuffix('.flac').rstrip().rstrip('.') + '.txt'
+
+from tqdm import tqdm
+def test_transcript_transform(sliced_dialogue = "D:/MLP_Samples/AIData/Master file/Sliced Dialogue"):
+    print("Checking...")
+    for (root, _, files) in os.walk(sliced_dialogue):
+        #print(f'Checking root {root}')
+        for f in files:
+            if not f.endswith('.flac'):
+                continue
+            transcript_path = transcript_transform_path(os.path.join(root, f))
+            if not os.path.exists(longpath(transcript_path)):
+                print(f'Anomalous path {transcript_path}')
+            #assert os.path.exists(longpath(transcript_path)), transcript_path
+
+if __name__ == '__main__':
+    #test_transcript_transform()
+    test_transcript_transform(r"D:\MEGASyncDownloads\Master file 2\Songs")

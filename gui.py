@@ -222,7 +222,10 @@ class PonySorter_B_GUI(QMainWindow):
         self.line_browser.itemSelectionChanged.connect(line_browser_select)
         hlayout.addWidget(self.line_browser)
 
-        stats_action.triggered.connect(partial(stats_dialog, self.core))  # TODO
+        exp_dir = self.conf.get('exp_dir', 'export')
+        os.makedirs(exp_dir, exist_ok=True)
+        stats_action.triggered.connect(
+            partial(stats_dialog, self.core, exp_dir))  
 
         if len(conf['default_project']):
             self.load_from_project(conf['default_project'])

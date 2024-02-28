@@ -156,7 +156,7 @@ def stats_displayof(sig, s):
 
     return canv1
 
-def stats_dialog(cur_core): 
+def stats_dialog(cur_core, exp_dir): 
     dialog = QDialog()
     dialog.setWindowTitle('Calculate statistics for current project')
     dialog_lay = QVBoxLayout(dialog)
@@ -182,23 +182,23 @@ def stats_dialog(cur_core):
 
     props_dict = {k:props_stats(v) for k,v in stats_dict.items()}
 
-    # Which episodes had the highest/lowest percentage of modified lines?
+    # 1 Which episodes had the highest/lowest percentage of modified lines?
     tu = [(k,v['modified']) for k,v in props_dict.items()]
     #tu = sorted(tu, key=lambda t: t[1])
     labels = [t[0] for t in tu]
     props = [t[1] for t in tu]
-    fig = Figure(dpi=60)
-    canv = FigureCanvas(fig)
-    ax = fig.add_subplot(111)
+    fig1 = Figure(figsize=(16,8), dpi=60)
+    canv = FigureCanvas(fig1)
+    ax = fig1.add_subplot(111)
     ax.bar(labels, props, width=0.5)
     ax.grid(axis="y")
     ax.set_title('Proportion of lines which were modified')
     dialog_lay.addWidget(canv)
 
-    # What were the balances of clean/noisy/very noisy pre and post?
-    fig = Figure(figsize=(16,10), dpi=80)
-    canv = FigureCanvas(fig)
-    ax = fig.add_subplot(111)
+    # 2 What were the balances of clean/noisy/very noisy pre and post?
+    fig2 = Figure(figsize=(16,10), dpi=80)
+    canv = FigureCanvas(fig2)
+    ax = fig2.add_subplot(111)
 
     clean_pre = np.array([
         s['totals']['clean_pre'] for s in stats_dict.values()])
@@ -225,17 +225,50 @@ def stats_dialog(cur_core):
         bottom=clean_pre+noisy_pre,color=cmap(0.66))
     ax.bar(i+.33,very_noisy_post,width=.33,label='very_noisy_pre',
         bottom=clean_post+noisy_post,color=cmap(0.76))
-    ax.legend(loc='upper right', ncol=3)
+    ax.legend(bbox_to_anchor=(1.1,1.05), ncol=3)
     ax.set_xticks(i, [k for k in stats_dict.keys()])
     ax.grid(axis="y")
-    ax.set_title('Noise quality, pre and post')
-    fig.savefig('noise_qual.png', dpi=300)
+    ax.set_title('Noise quality, pre and post', loc='left')
+    #fig.savefig('noise_qual.png', dpi=300)
     dialog_lay.addWidget(canv)
 
-    # What proportion of noisy/very noisy items could we upgrade?
-    fig = Figure(dpi=80)
-    canv = FigureCanvas(fig)
+    # 3 What proportion of noisy/very noisy items could we upgrade?
+    fig3 = Figure(figsize=(16,10), dpi=80)
+    canv = FigureCanvas(fig3)
+    demu0_preferred = np.array(
+        [s['totals']['demu0_preferred'] for s in stats_dict.values()])
+    demu1_preferred = np.array(
+        [s['totals']['demu1_preferred'] for s in stats_dict.values()])
+    remainder = (noisy_pre + very_noisy_pre) - (demu0_preferred + demu1_preferred)
+    canv = FigureCanvas(fig3)
+    ax = fig3.add_subplot(111)
+    prop_upgraded = (demu0_preferred + demu1_preferred) / (noisy_pre + very_noisy_pre)
+    bars = ax.bar(i,noisy_pre + very_noisy_pre,width=.5,
+        label='noisy or very noisy', edgecolor=cmap(1), linewidth=2, facecolor='none')
+    ax.bar(i,demu0_preferred,width=.5,label='demu0 preferred', color=cmap(0.3))
+    ax.bar(i,demu1_preferred,width=.5,label='demu1 preferred',
+        bottom=demu0_preferred, color=cmap(0.6))
+    for bar,prop in zip(bars, prop_upgraded): # proportion readouts
+        yval = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2, yval+2, f'{prop:.3f}',
+            ha='center', va='bottom')
+    ax.set_xticks(i, [k for k in stats_dict.keys()])
+    ax.grid(axis="y")
+    ax.set_title("Modification of noisy lines (prop = of noisy lines modified)",
+        loc='left')
+    ax.legend(bbox_to_anchor=(1.1,1.05), ncol=3)
+    dialog_lay.addWidget(canv)
+
     # totals(demu0_preferred + demu1_preferred) / (noisy_pre + very_noisy_pre)
+    def save_cb():
+        DPI = 300
+        fig1.savefig(os.path.join(exp_dir,'Proportion modified.png'),dpi=DPI)
+        fig2.savefig(os.path.join(exp_dir,'Noise mix pre and post.png'),dpi=DPI)
+        fig3.savefig(os.path.join(exp_dir,'Upgrades by model.png'),dpi=DPI)
+        logger.info(f'Saved graphs to {exp_dir}')
+    save_button = QPushButton('Save graphs to export dir')
+    save_button.pressed.connect(save_cb)
+    dialog_lay.addWidget(save_button)
 
     # Which model was preferred?
 
