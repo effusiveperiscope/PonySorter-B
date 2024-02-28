@@ -6,9 +6,13 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=['matplotlib'],
     hookspath=[],
-    hooksconfig={},
+    hooksconfig={
+        'matplotlib': {
+            'backends': ['Qt5Agg']
+        }
+    },
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
@@ -49,4 +53,4 @@ shutil.copy2('hashes.json','dist/ponysorter_b/hashes.json')
 shutil.copy2('episodes_labels_index.json',
     'dist/ponysorter_b/episodes_labels_index.json')
 os.makedirs('dist/ponysorter_b/in_audio', exist_ok=True)
-shutil.copy2('sup_audio','dist/ponysorter_b/sup_audio')
+shutil.copytree('sup_audio','dist/ponysorter_b/sup_audio')

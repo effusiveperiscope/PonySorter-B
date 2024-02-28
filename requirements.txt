@@ -5,3 +5,4 @@ pygame
 PyQt5
 tqdm
 numpy
+matplotlib
