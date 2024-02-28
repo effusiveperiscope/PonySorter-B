@@ -239,6 +239,7 @@ class PonySorter_B:
                     except PermissionError as e:
                         logger.error(e)
                         self.load_sig(old_loaded_sig)
+                        raise e
 
             for i,line in enumerate(self.lines):
                 load_cb(int(i*100/line_ct))

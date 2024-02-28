@@ -63,17 +63,23 @@ class PonySorter_B_GUI(QMainWindow):
         def export_audio():
             exp_dir = self.conf.get('exp_dir', 'export')
             os.makedirs(exp_dir, exist_ok=True)
-            self.core.export_audio(exp_dir, update_progress,
-                sig_to_proc=[self.core.loaded_sig])
-            self.core.export_audacity_labels(exp_dir, update_progress,
-                sig_to_proc=[self.core.loaded_sig])
+            try:
+                self.core.export_audio(exp_dir, update_progress,
+                    sig_to_proc=[self.core.loaded_sig])
+                self.core.export_audacity_labels(exp_dir, update_progress,
+                    sig_to_proc=[self.core.loaded_sig])
+            except PermissionError:
+                pass
             logger.info(f'Finished export')
 
         def export_all_audio():
             exp_dir = self.conf.get('exp_dir', 'export')
             os.makedirs(exp_dir, exist_ok=True)
-            self.core.export_audio(exp_dir, update_progress)
-            self.core.export_audacity_labels(exp_dir, update_progress)
+            try:
+                self.core.export_audio(exp_dir, update_progress)
+                self.core.export_audacity_labels(exp_dir, update_progress)
+            except PermissionError:
+                pass
             logger.info(f'Finished export')
 
         #def export_audacity_labels():
