@@ -44,6 +44,12 @@ def path_reparse(orig_file, parse_src):
     out_path = parent / label_reparse(name, parse_src)
     return str(out_path)
 
+# The unique label, ignoring noise levels -- used as an identifier for a line
+def label_unique(label):
+    sp = label.split('_')
+    sp[5] = ''
+    return '_'.join(sp)
+
 qwertymap0 = '1234567890'
 qwertymap1 = 'qwertyuiop'
 qwertymap2 = 'asdfghjkl;'

@@ -7,7 +7,7 @@ from hashes import Hasher
 from pydub import AudioSegment
 from utils import (
     sanitize_file_name, mergedicts, label_reparse, path_reparse, longpath,
-    transcript_transform_path)
+    transcript_transform_path, label_unique)
 from pathlib import Path
 from log import logger
 from config import save_config
@@ -304,3 +304,44 @@ class PonySorter_B:
             exp_dir, 'episodes_labels_index_updated.json'), 'w') as f:
             json.dump(new_index, f)
         load_cb(100)
+
+    def import_from_label_files(self, files):
+        for f in files:
+            fn = Path(f).name
+            sp = fn.removesuffix('.txt').split('_')
+            if len(sp) == 1:
+                continue # Then this is just the master
+            sig = sp[0]
+            tag = sp[1]
+            if tag == 'master':
+                tag = 'master_ver'
+
+            logger.info(f'Importing {sig}, tag {tag} from {fn}')
+
+            lines = self.get_lines_for_sig(sig)
+            lines_index_map = {
+                label_unique(v['label']):i for i,v in enumerate(lines)}
+
+            with open(f, encoding='utf-8') as fp:
+                entries = fp.read()
+
+            if not sig in self.modified_index:
+                self.modified_index[sig] = {}
+
+            entries = entries.split('\n')
+            for e in entries:
+                if not len(e.strip()):
+                    continue
+                label = e.split('\t')
+                if not len(label):
+                    continue
+                label = label[2]
+                if not label_unique(label) in lines_index_map:
+                    logging.error(f"Could not find unique label {label_unique(label)}")
+                    return
+                noise = label.split('_')[5]
+                idx = lines_index_map[label_unique(label)]
+                lines[idx]['selected_tag'] = tag
+                lines[idx]['parse']['noise'] = noise
+                self.modified_index[sig][str(idx)] = lines[idx]
+                self.dirty_flag = True

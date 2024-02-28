@@ -1,4 +1,5 @@
 from PyQt5.QtCore import (Qt, QBuffer)
+from PyQt5.QtGui import (QIcon)
 from PyQt5.QtWidgets import (QWidget, QApplication, QMainWindow, QVBoxLayout,
     QHBoxLayout, QFrame, QPushButton, QPlainTextEdit, QGroupBox, QRadioButton,
     QSizePolicy, QGridLayout, QLineEdit, QLabel, QListWidget, QListWidgetItem,
@@ -124,6 +125,34 @@ class PonySorter_B_GUI(QMainWindow):
 
         stats_action = self.menu_bar.addAction("View stats")
         # deferred connect
+
+        def import_from_labels_dialog():
+            dialog = QDialog()
+            dialog_lay = QVBoxLayout(dialog)
+            dialog_lay.addWidget(QLabel("Had a numget moment? "
+                "Try importing data from your exported label files."))
+
+            def numbutton_cb():
+                options=QFileDialog.Options()
+                files,_ = QFileDialog.getOpenFileNames(self,
+                    'Load audacity label files', '',
+                    'Text Files (*.txt);;All Files (*)',
+                    options=options)
+                if len(files):
+                    self.core.import_from_label_files(files)
+
+            num_button = QPushButton()
+            icon = QIcon("numget.jpg")
+            num_button.setIcon(icon)
+            num_button.setIconSize(num_button.size())
+            num_button.pressed.connect(numbutton_cb)
+            dialog_lay.addWidget(num_button)
+
+            dialog.exec_()
+
+        import_from_labels_action = self.menu_bar.addAction(
+            "Import from label files")
+        import_from_labels_action.triggered.connect(import_from_labels_dialog)
 
         main = QFrame()
         self.setCentralWidget(main)
