@@ -10,6 +10,7 @@ import copy
 from pathlib import Path
 from functools import partial, reduce
 from log import logger
+from utils import sigcat
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.cm as cm
@@ -184,6 +185,10 @@ def stats_dialog(cur_core, exp_dir):
             cur_core.modified_index[sig])
         stats_dict[sig] = stats
     aggregate_dict = reduce(sum_stats, (s for s in stats_dict.values()))
+
+    stats_pairs = [(k,v) for k,v in stats_dict.items()]
+    stats_pairs = sorted(stats_pairs, key=lambda x: sigcat(x[0]))
+    stats_dict = {x[0]:x[1] for x in stats_pairs}
 
     props_dict = {k:props_stats(v) for k,v in stats_dict.items()}
 

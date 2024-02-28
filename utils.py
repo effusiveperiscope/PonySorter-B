@@ -66,6 +66,10 @@ def longpath(path):
 def transcript_transform_path(path):
     return path.removesuffix('.flac').rstrip().rstrip('.') + '.txt'
 
+def sigcat(sig):
+    nums = re.findall(r'\d+',sig)
+    return int(''.join(nums))
+
 from tqdm import tqdm
 def test_transcript_transform(sliced_dialogue = "D:/MLP_Samples/AIData/Master file/Sliced Dialogue"):
     print("Checking...")

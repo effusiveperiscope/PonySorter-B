@@ -204,6 +204,7 @@ class PonySorter_B:
 
         if not len(sig_to_proc):
             sig_to_proc = list(self.modified_index.keys())
+            print(sig_to_proc)
 
         old_loaded_sig = self.loaded_sig
         for i, sig in enumerate(sig_to_proc):
