@@ -45,10 +45,7 @@ def compare_sigs(orig_sig, new_sig, modified_sig):
     for line_idx, orig_line in enumerate(orig_lines):
         new_line = new_sig['lines'][line_idx]
         line_idx = str(line_idx)
-        if line_idx not in modified_sig:
-            modified_line = None
-        else:
-            modified_line = modified_sig[line_idx]
+        modified_line = modified_sig.get(line_idx, None)
 
         if new_line['parse']['noise'] == '':
             stats['totals']['clean_post'] += 1
@@ -110,11 +107,23 @@ def sum_stats(a,b):
     return {'convs': sum_dicts(a['convs'],b['convs']),
      'totals': sum_dicts(a['totals'], b['totals'])}
 
+def div_or_zero(a,b):
+    if b == 0:
+        return 0
+    return a / b
+
 def props_stats(a):
-    props = { k: v / a['totals']['total'] 
-        for k,v in a['totals'].items()} # proportion of total lines
-    props.update({ k: v / a['totals']['modified'] 
-        for k,v in a['convs'].items()}) # proportion of modified
+    try:
+        props = { k: v / a['totals']['total'] 
+            for k,v in a['totals'].items()} # proportion of total lines
+        props.update({ k: v / a['totals']['modified'] 
+            for k,v in a['convs'].items()}) # proportion of modified
+    except ZeroDivisionError as e:
+        logger.warn(e)
+        props = { k: div_or_zero(v, a['totals']['total'])
+            for k,v in a['totals'].items()} # proportion of total lines
+        props.update({ k: div_or_zero(v, a['totals']['modified'])
+            for k,v in a['convs'].items()}) # proportion of modified
     return props
 
 def stats_displayof(sig, s):
