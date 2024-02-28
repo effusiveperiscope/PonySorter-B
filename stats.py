@@ -189,6 +189,7 @@ def stats_dialog(cur_core, exp_dir):
     props = [t[1] for t in tu]
     fig1 = Figure(figsize=(16,8), dpi=60)
     canv = FigureCanvas(fig1)
+    canv.setMinimumHeight(300)
     ax = fig1.add_subplot(111)
     ax.bar(labels, props, width=0.5)
     ax.grid(axis="y")
