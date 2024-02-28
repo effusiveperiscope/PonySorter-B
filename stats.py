@@ -28,7 +28,7 @@ def compare_sigs(orig_sig, new_sig, modified_sig):
     stats['convs']['demu1'] = 0
     stats['totals'] = {}
     stats['totals']['total'] = len(orig_lines)
-    stats['totals']['modified'] = len(modified_sig)
+    stats['totals']['modified'] = 0
     stats['totals']['clean_pre'] = 0
     stats['totals']['noisy_pre'] = 0
     stats['totals']['very_noisy_pre'] = 0
@@ -67,12 +67,15 @@ def compare_sigs(orig_sig, new_sig, modified_sig):
                 stats['convs']['noisy_to_clean'] += 1
             if modified_line['parse']['noise'] == 'Noisy':
                 stats['convs']['noisy_to_noisy'] += 1
+            # A line is only considered modified if demu0 or demu1 is selected.
             # Of all noisy/very noisy lines,
             # for how many were either of the demucs models preferred?
             if modified_line['selected_tag'] == 'demu0':
                 stats['totals']['demu0_preferred'] += 1
+                stats['totals']['modified'] += 1
             elif modified_line['selected_tag'] == 'demu1':
                 stats['totals']['demu1_preferred'] += 1
+                stats['totals']['modified'] += 1
         elif orig_line['parse']['noise'] == 'Very Noisy':
             stats['totals']['very_noisy_pre'] += 1
             if modified_line is None: 
@@ -84,8 +87,10 @@ def compare_sigs(orig_sig, new_sig, modified_sig):
                 stats['convs']['very_noisy_to_noisy'] += 1
             if modified_line['selected_tag'] == 'demu0':
                 stats['totals']['demu0_preferred'] += 1
+                stats['totals']['modified'] += 1
             elif modified_line['selected_tag'] == 'demu1':
                 stats['totals']['demu1_preferred'] += 1
+                stats['totals']['modified'] += 1
 
         if modified_line is None: 
             continue
