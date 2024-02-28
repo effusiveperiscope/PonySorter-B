@@ -35,6 +35,7 @@ def mergedicts(dict1, dict2):
 
 def label_reparse(label, parse_src):
     sp = label.split('_')
+    sp[3] = parse_src['char']
     sp[5] = parse_src['noise']
     return '_'.join(sp)
 

@@ -199,7 +199,21 @@ class PonySorter_B_GUI(QMainWindow):
 
         character_box, self.character_field = self.labeled_field(
             "Character", QLineEdit())
-        self.character_field.setEnabled(False)
+
+        # Changes to the character field will not be reflected in the label
+        # But they will be exported.
+        def character_edit_cb():
+            if not hasattr(self.core, 'lines'):
+                return
+            c = self.character_field.text()
+            line = self.core.lines[self.line_idx]
+            if not len(c):
+                c = line['parse']['char']
+            else:
+                # A character change is a significant action and warrants logging
+                logger.info(f"Changed character of line {line['label']} to {c}")
+            self.core.edit_line(self.line_idx, None, {'parse': {'char': c}})
+        self.character_field.editingFinished.connect(character_edit_cb)
         line_data_lay.addWidget(character_box)
 
         mood_box, self.mood_field = self.labeled_field(

@@ -55,14 +55,12 @@ def prep_line(l):
         l['selected_tag'] = 'master_ver'
     if not 'original_noise' in l:
         l['original_noise'] = l['parse']['noise']
+    if not 'original_char' in l:
+        l['original_char'] = l['parse']['char']
 
 # TODO: Editing the character
 # XXX: Editing the transcript must also edit the resulting transcript file
 # It also means that label indexes based on the new transcript
-# XXX: Can we rely on episode + timestamp as an identifier of a unique line?
-# We must test our dataset again
-# Nope. OK then what?
-# Perhaps we can use the millisecond-accurate timestamp as an identifier then?
 
 class PonySorter_B:
     def __init__(self, conf):
@@ -236,7 +234,11 @@ class PonySorter_B:
                 expected_parent = Path(expected_save_path).parent
                 # Reset sig tree if parent exists
                 if os.path.exists(expected_parent):
-                    shutil.rmtree(expected_parent)
+                    try:
+                        shutil.rmtree(expected_parent)
+                    except PermissionError as e:
+                        logger.error(e)
+                        self.load_sig(old_loaded_sig)
 
             for i,line in enumerate(self.lines):
                 load_cb(int(i*100/line_ct))
@@ -261,7 +263,7 @@ class PonySorter_B:
                         self.sources[line['selected_tag']], line)
                     segment_to_save.export(longpath(save_path), format='flac')
 
-                save_path_transcript = transcript_transform_path(save_path) + '.txt'
+                save_path_transcript = transcript_transform_path(save_path)
                 shutil.copy(longpath(orig_file_transcript), 
                     longpath(save_path_transcript))
         self.load_sig(old_loaded_sig)
@@ -298,6 +300,7 @@ class PonySorter_B:
                 new_label = label_reparse(line['label'], line['parse'])
                 key = self.key_transform(sig)
                 new_index[key]['lines'][j].pop('original_noise')
+                new_index[key]['lines'][j].pop('original_char')
                 new_index[key]['lines'][j].pop('selected_tag')
                 new_index[key]['lines'][j]['label'] = new_label
                 new_index[key]['lines'][j]['orig_file'] = path_reparse(
@@ -358,7 +361,9 @@ class PonySorter_B:
                 if not key in lines_index_map:
                     logging.warn(f"Could not find entry {e}")
                     continue
-                noise = label.split('_')[5]
+                label_sp = label.split('_')
+                char = label_sp[3]
+                noise = label_sp[5]
                 idx = lines_index_map[key]
                 self.edit_line(idx, tag, 
-                    {'parse': {'noise':noise}}, sig=sig, verbose=True)
+                    {'parse': {'noise':noise, 'char':char}}, sig=sig, verbose=True)
