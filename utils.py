@@ -44,12 +44,6 @@ def path_reparse(orig_file, parse_src):
     out_path = parent / label_reparse(name, parse_src)
     return str(out_path)
 
-# The unique label, ignoring noise levels -- used as an identifier for a line
-def label_unique(label):
-    sp = label.split('_')
-    sp[5] = ''
-    return '_'.join(sp)
-
 qwertymap0 = '1234567890'
 qwertymap1 = 'qwertyuiop'
 qwertymap2 = 'asdfghjkl;'
@@ -83,6 +77,21 @@ def test_transcript_transform(sliced_dialogue = "D:/MLP_Samples/AIData/Master fi
                 print(f'Anomalous path {transcript_path}')
             #assert os.path.exists(longpath(transcript_path)), transcript_path
 
+def test_unique_identifier(sliced_dialogue = "D:/MLP_Samples/AIData/Master file/Sliced Dialogue"):
+    print("Checking...")
+    for (root, _, files) in os.walk(sliced_dialogue):
+        #print(f'Checking root {root}')
+        seen = set()
+        for f in files:
+            if not f.endswith('.flac'):
+                continue
+            fn = Path(f).name
+            sp = fn.split('_')
+            ident = '_'.join(sp[0:3])
+            if ident in seen:
+                print(f'Duplicate ident {fn} in {root}')
+            seen.add(ident)
+
 if __name__ == '__main__':
-    #test_transcript_transform()
-    test_transcript_transform(r"D:\MEGASyncDownloads\Master file 2\Songs")
+    test_transcript_transform()
+    #test_unique_identifier(r"D:\MEGASyncDownloads\Master file 2\Songs")

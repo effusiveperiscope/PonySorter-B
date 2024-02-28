@@ -7,7 +7,7 @@ from hashes import Hasher
 from pydub import AudioSegment
 from utils import (
     sanitize_file_name, mergedicts, label_reparse, path_reparse, longpath,
-    transcript_transform_path, label_unique)
+    transcript_transform_path)
 from pathlib import Path
 from log import logger
 from config import save_config
@@ -48,6 +48,21 @@ def subsegment(source, line):
 
 def sig_to_labels_key(sig):
     return f's{int(sig[1:3])}e{int(sig[4:6])}'
+
+# Initialize line with default values
+def prep_line(l):
+    if not 'selected_tag' in l:
+        l['selected_tag'] = 'master_ver'
+    if not 'original_noise' in l:
+        l['original_noise'] = l['parse']['noise']
+
+# TODO: Editing the character
+# XXX: Editing the transcript must also edit the resulting transcript file
+# It also means that label indexes based on the new transcript
+# XXX: Can we rely on episode + timestamp as an identifier of a unique line?
+# We must test our dataset again
+# Nope. OK then what?
+# Perhaps we can use the millisecond-accurate timestamp as an identifier then?
 
 class PonySorter_B:
     def __init__(self, conf):
@@ -105,10 +120,7 @@ class PonySorter_B:
         self.sources = {}
         self.lines = self.get_lines_for_sig(sig)
         for l in self.lines:
-            if not 'selected_tag' in l:
-                l['selected_tag'] = 'master_ver'
-            if not 'original_noise' in l:
-                l['original_noise'] = l['parse']['noise']
+            prep_line(l)
         len_items = len(self.audios_index[sig])
         for i,t in enumerate(self.audios_index[sig].items()):
             tag,path = t
@@ -148,16 +160,21 @@ class PonySorter_B:
             preview_segments.move_to_end('orig') 
         return self.sources, self.lines[i], preview_segments
 
-    def edit_line(self, i, select_tag, add_data):
+    def edit_line(self, i, select_tag, add_data, sig=None, verbose=False):
         assert i < len(self.lines)
+        if sig is None:
+            sig = self.loaded_sig
+        lines = self.get_lines_for_sig(sig)
         if select_tag is not None:
-            self.lines[i]['selected_tag'] = select_tag
+            if verbose and lines[i]['selected_tag'] != select_tag:
+                logger.info(f"Change {i}: {lines[i]['selected_tag']} -> {select_tag}")
+            lines[i]['selected_tag'] = select_tag
         if add_data is not None:
-            self.lines[i] = dict(mergedicts(self.lines[i], add_data))
-        if not self.loaded_sig in self.modified_index:
-            self.modified_index[self.loaded_sig] = {}
+            lines[i] = dict(mergedicts(lines[i], add_data))
+        if not sig in self.modified_index:
+            self.modified_index[sig] = {}
         # Standardize index as str to avoid weird problems w/ json
-        self.modified_index[self.loaded_sig][str(i)] = self.lines[i]
+        self.modified_index[sig][str(i)] = lines[i]
         self.dirty_flag = True
         return self.lines[i]
 
@@ -270,10 +287,7 @@ class PonySorter_B:
                 base_file_handle = open(os.path.join(exp_dir, sig+'.txt'),'w')
 
             for l in lines:
-                if not 'selected_tag' in l:
-                    l['selected_tag'] = 'master_ver'
-                if not 'original_noise' in l:
-                    l['original_noise'] = l['parse']['noise']
+                prep_line(l)
 
             for j,line in enumerate(lines):
                 tag = line['selected_tag']
@@ -321,7 +335,7 @@ class PonySorter_B:
 
             lines = self.get_lines_for_sig(sig)
             lines_index_map = {
-                label_unique(v['label']):i for i,v in enumerate(lines)}
+                str(v['ts'])+str(v['te']):i for i,v in enumerate(lines)}
 
             with open(f, encoding='utf-8') as fp:
                 entries = fp.read()
@@ -333,16 +347,18 @@ class PonySorter_B:
             for e in entries:
                 if not len(e.strip()):
                     continue
-                label = e.split('\t')
-                if not len(label):
+                sp = e.split('\t')
+                if not len(sp):
                     continue
-                label = label[2]
-                if not label_unique(label) in lines_index_map:
-                    logging.error(f"Could not find unique label {label_unique(label)}")
-                    return
+                # Lines can be uniquely identified by episode + start timestamp + end timestamp
+                ts = sp[0].strip()
+                te = sp[1].strip()
+                label = sp[2].strip()
+                key = str(ts)+str(te)
+                if not key in lines_index_map:
+                    logging.warn(f"Could not find entry {e}")
+                    continue
                 noise = label.split('_')[5]
-                idx = lines_index_map[label_unique(label)]
-                lines[idx]['selected_tag'] = tag
-                lines[idx]['parse']['noise'] = noise
-                self.modified_index[sig][str(idx)] = lines[idx]
-                self.dirty_flag = True
+                idx = lines_index_map[key]
+                self.edit_line(idx, tag, 
+                    {'parse': {'noise':noise}}, sig=sig, verbose=True)
