@@ -56,3 +56,6 @@ def longpath(path):
         return path
     else:
         return path
+
+def transcript_transform_path(path):
+    return path.removesuffix('.flac').rstrip('.') + '.txt'

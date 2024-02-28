@@ -6,7 +6,8 @@ import copy
 from hashes import Hasher
 from pydub import AudioSegment
 from utils import (
-    sanitize_file_name, mergedicts, label_reparse, path_reparse, longpath)
+    sanitize_file_name, mergedicts, label_reparse, path_reparse, longpath,
+    transcript_transform_path)
 from pathlib import Path
 from log import logger
 from config import save_config
@@ -224,8 +225,7 @@ class PonySorter_B:
                 orig_file = line['orig_file'].replace(
                     'MASTER_FILE_1', self.conf['master_file_1']).replace(
                     'MASTER_FILE_2', self.conf['master_file_2']) 
-                orig_file_transcript = orig_file.removesuffix(
-                    '..flac').removesuffix('.flac') + '.txt'
+                orig_file_transcript = transcript_transform_path(orig_file)
                 assert os.path.exists(longpath(orig_file_transcript)), orig_file_transcript
 
                 save_path = path_reparse(line['orig_file'], line['parse'])
@@ -243,7 +243,7 @@ class PonySorter_B:
                         self.sources[line['selected_tag']], line)
                     segment_to_save.export(longpath(save_path), format='flac')
 
-                save_path_transcript = save_path.removesuffix('.flac') + '.txt'
+                save_path_transcript = transcript_transform_path(save_path) + '.txt'
                 shutil.copy(longpath(orig_file_transcript), 
                     longpath(save_path_transcript))
         self.load_sig(old_loaded_sig)

@@ -12,6 +12,7 @@ from functools import partial, reduce
 from log import logger
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+import matplotlib.cm as cm
 import numpy as np
 
 def compare_sigs(orig_sig, new_sig, modified_sig):
@@ -41,11 +42,19 @@ def compare_sigs(orig_sig, new_sig, modified_sig):
     stats['totals']['none_preferred'] = 0
 
     for line_idx, orig_line in enumerate(orig_lines):
-        # problem: line_idx is int, but modified_sig ends up as as str after load
+        new_line = new_sig['lines'][line_idx]
+        line_idx = str(line_idx)
         if line_idx not in modified_sig:
             modified_line = None
         else:
             modified_line = modified_sig[line_idx]
+
+        if new_line['parse']['noise'] == '':
+            stats['totals']['clean_post'] += 1
+        elif new_line['parse']['noise'] == 'Noisy':
+            stats['totals']['noisy_post'] += 1
+        elif new_line['parse']['noise'] == 'Very Noisy':
+            stats['totals']['very_noisy_post'] += 1
 
         if orig_line['parse']['noise'] == '':
             stats['totals']['clean_pre'] += 1
@@ -80,12 +89,6 @@ def compare_sigs(orig_sig, new_sig, modified_sig):
 
         if modified_line is None: 
             continue
-        if modified_line['parse']['noise'] == '':
-            stats['totals']['clean_post'] += 1
-        elif modified_line['parse']['noise'] == 'Noisy':
-            stats['totals']['noisy_post'] += 1
-        elif modified_line['parse']['noise'] == 'Very Noisy':
-            stats['totals']['very_noisy_post'] += 1
         # What percentage of modified were demucs0 and demucs1?
         if modified_line['selected_tag'] == 'demu0':
             stats['convs']['demu0'] += 1
@@ -95,7 +98,7 @@ def compare_sigs(orig_sig, new_sig, modified_sig):
     return stats
 
 def sum_dicts(a,b):
-    return {k1: v1 + v2 for k1,v1,_,v2 in zip(a.items(), b.items())}
+    return {t1[0]: t1[1] + t2[1] for t1,t2 in zip(a.items(), b.items())}
 
 def sum_stats(a,b):
     return {'convs': sum_dicts(a['convs'],b['convs']),
@@ -112,15 +115,16 @@ def stats_displayof(sig, s):
     props = props_stats(s)
 
     # Episode comparison:
-    # Which episodes had the highest/lowest percentage of modified audios?
+    # Which episodes had the highest/lowest percentage of modified lines?
+    # This is just a flat proportion and can be done in an aggregate bar chart
 
     # What were the proportions of clean/noisy/very noisy pre and post?
+    # This is one of the rare cases where we it is feasible to do a grouped stacked bar chart
     # Stacked bar chart
     labels = ['Pre', 'Post']
     clean_props = np.array([props['clean_pre'], props['clean_post']])
     noisy_props = np.array([props['noisy_pre'], props['noisy_post']])
     very_noisy_props = np.array([props['very_noisy_pre'], props['very_noisy_post']])
-    print(props)
 
     fig1 = Figure(figsize=(4,5), dpi=100)
     canv1 = FigureCanvas(fig1)
@@ -141,8 +145,14 @@ def stats_displayof(sig, s):
 
     # At what proportion of noisy/very noisy items
     # were we able to upgrade to a lower noise level?
+    # This is just two proportions, or two stacked items, and can be done either in a grouped chart
+    # or in a grouped stacked bar chart
 
     # Given a noisy/very noisy audio, at what proportion did we prefer demucs0/demucs1?
+    # This is just a flat proportion and can be done in an aggregate bar chart
+
+    # So all of these can be done in the aggregate and there is not a real need for per-episode
+    # bar charts?
 
     return canv1
 
@@ -151,7 +161,7 @@ def stats_dialog(cur_core):
     dialog.setWindowTitle('Calculate statistics for current project')
     dialog_lay = QVBoxLayout(dialog)
 
-    if not hasattr(cur_core, 'lines'):
+    if not hasattr(cur_core, 'lines') or not len(cur_core.modified_index):
         logger.info('No data available for statistics')
         return
     orig_index = cur_core.orig_labels_index
@@ -159,7 +169,7 @@ def stats_dialog(cur_core):
 
     stats_dict = {}
 
-    # Only show stats for signatures in the modified index.
+    # Only calculate stats for signatures in the modified index.
     for sig in cur_core.modified_index.keys():
         key = cur_core.key_transform(sig)
         if key not in orig_index:
@@ -168,8 +178,70 @@ def stats_dialog(cur_core):
         stats = compare_sigs(orig_index[key], new_index[key], 
             cur_core.modified_index[sig])
         stats_dict[sig] = stats
-        dialog_lay.addWidget(stats_displayof(sig, stats))
-        break
     aggregate_dict = reduce(sum_stats, (s for s in stats_dict.values()))
+
+    props_dict = {k:props_stats(v) for k,v in stats_dict.items()}
+
+    # Which episodes had the highest/lowest percentage of modified lines?
+    tu = [(k,v['modified']) for k,v in props_dict.items()]
+    #tu = sorted(tu, key=lambda t: t[1])
+    labels = [t[0] for t in tu]
+    props = [t[1] for t in tu]
+    fig = Figure(dpi=60)
+    canv = FigureCanvas(fig)
+    ax = fig.add_subplot(111)
+    ax.bar(labels, props, width=0.5)
+    ax.grid(axis="y")
+    ax.set_title('Proportion of lines which were modified')
+    dialog_lay.addWidget(canv)
+
+    # What were the balances of clean/noisy/very noisy pre and post?
+    fig = Figure(figsize=(16,10), dpi=80)
+    canv = FigureCanvas(fig)
+    ax = fig.add_subplot(111)
+
+    clean_pre = np.array([
+        s['totals']['clean_pre'] for s in stats_dict.values()])
+    clean_post = np.array([
+        s['totals']['clean_post'] for s in stats_dict.values()])
+    noisy_pre = np.array([
+        s['totals']['noisy_pre'] for s in stats_dict.values()])
+    noisy_post = np.array([
+        s['totals']['noisy_post'] for s in stats_dict.values()])
+    very_noisy_pre = np.array([
+        s['totals']['very_noisy_pre'] for s in stats_dict.values()])
+    very_noisy_post = np.array([
+        s['totals']['very_noisy_post'] for s in stats_dict.values()])
+    i = np.arange(len(stats_dict))
+
+    cmap = cm.viridis_r
+    ax.bar(i,clean_pre,width=.33,label='clean_pre',color=cmap(0))
+    ax.bar(i+.33,clean_post,width=.33,label='clean_post',color=cmap(0.1))
+    ax.bar(i,noisy_pre,width=.33,label='noisy_pre',
+        bottom=clean_pre,color=cmap(0.33))
+    ax.bar(i+.33,noisy_post,width=.33,label='noisy_post',
+        bottom=clean_post,color=cmap(0.43))
+    ax.bar(i,very_noisy_pre,width=.33,label='very_noisy_pre',
+        bottom=clean_pre+noisy_pre,color=cmap(0.66))
+    ax.bar(i+.33,very_noisy_post,width=.33,label='very_noisy_pre',
+        bottom=clean_post+noisy_post,color=cmap(0.76))
+    ax.legend(loc='upper right', ncol=3)
+    ax.set_xticks(i, [k for k in stats_dict.keys()])
+    ax.grid(axis="y")
+    ax.set_title('Noise quality, pre and post')
+    fig.savefig('noise_qual.png', dpi=300)
+    dialog_lay.addWidget(canv)
+
+    # What proportion of noisy/very noisy items could we upgrade?
+    fig = Figure(dpi=80)
+    canv = FigureCanvas(fig)
+    # totals(demu0_preferred + demu1_preferred) / (noisy_pre + very_noisy_pre)
+
+    # Which model was preferred?
+
+    #import pdb
+    #from PyQt5.QtCore import pyqtRemoveInputHook
+    #pyqtRemoveInputHook()
+    #pdb.set_trace()
 
     dialog.exec_()

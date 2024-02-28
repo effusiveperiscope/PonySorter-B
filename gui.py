@@ -222,7 +222,7 @@ class PonySorter_B_GUI(QMainWindow):
         self.line_browser.itemSelectionChanged.connect(line_browser_select)
         hlayout.addWidget(self.line_browser)
 
-        #stats_action.triggered.connect(partial(stats_dialog, self.core))  # TODO
+        stats_action.triggered.connect(partial(stats_dialog, self.core))  # TODO
 
         if len(conf['default_project']):
             self.load_from_project(conf['default_project'])
