@@ -50,6 +50,7 @@ import os
 import shutil
 shutil.copy2('config.yaml','dist/ponysorter_b/config.yaml')
 shutil.copy2('hashes.json','dist/ponysorter_b/hashes.json')
+shutil.copy2('numget.jpg','dist/ponysorter_b/numget.jpg')
 shutil.copy2('episodes_labels_index.json',
     'dist/ponysorter_b/episodes_labels_index.json')
 os.makedirs('dist/ponysorter_b/in_audio', exist_ok=True)
