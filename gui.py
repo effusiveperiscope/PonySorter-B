@@ -30,6 +30,31 @@ class PonySorter_B_GUI(QMainWindow):
         load_episode.triggered.connect(self.load_episode_dialog)
         load_episode.setShortcut('Ctrl+1')
 
+        def change_episode(offset):
+            assert offset == 1 or offset == -1
+            if not len(self.core.loaded_sig):
+                return
+            ordered_eps = self.core.get_sigs_ordered_by_episode()
+            idxof = ordered_eps.index(self.core.loaded_sig)
+            if offset == -1 and idxof == 0:
+                return # noop
+            elif offset == 1 and idxof == len(ordered_eps) - 1:
+                return # noop
+            if offset == 1:
+                sl_hook('next_episode')
+            elif offset == -1:
+                sl_hook('prev_episode')
+            new_sig = ordered_eps[idxof + offset]
+            self.load_selection(new_sig, None)
+
+        next_episode = file_menu.addAction("Select next episode")
+        next_episode.triggered.connect(partial(change_episode, 1))
+        next_episode.setShortcut('Ctrl+>')
+
+        prev_episode = file_menu.addAction("Select previous episode")
+        prev_episode.triggered.connect(partial(change_episode, -1))
+        prev_episode.setShortcut('Ctrl+<')
+
         self.last_save = ''
         self.filter_settings = {
             'min_noise': 'Clean'

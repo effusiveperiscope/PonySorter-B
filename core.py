@@ -7,7 +7,7 @@ from hashes import Hasher
 from pydub import AudioSegment
 from utils import (
     sanitize_file_name, mergedicts, label_reparse, path_reparse, longpath,
-    transcript_transform_path)
+    transcript_transform_path, sigcat)
 from pathlib import Path
 from log import logger
 from config import save_config
@@ -86,6 +86,9 @@ class PonySorter_B:
 
     def get_sigs(self):
         return self.audios_index.keys()
+
+    def get_sigs_ordered_by_episode(self):
+        return sorted(self.audios_index.keys(), key=lambda s: sigcat(s))
 
     def get_season_ep_sigs(self):
         return [k for k,v in self.audios_index.items() if v[
