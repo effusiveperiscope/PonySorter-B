@@ -152,6 +152,8 @@ class PonySorter_B:
         master_file_path = master_file_path.replace(
             'MASTER_FILE_2', self.conf['master_file_2'])
         preview_segments = OrderedDict()
+        if not os.path.exists(master_file_path):
+            raise FileNotFoundError(f'Could not find master file {master_file_path}')
         preview_segments['master_ver'] = AudioSegment.from_file(
             longpath(master_file_path))
         for tag,source in self.sources.items():

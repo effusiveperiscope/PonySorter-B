@@ -610,8 +610,12 @@ class PonySorter_B_GUI(QMainWindow):
         # No-op, some stray events emit invalid idx
         if self.line_idx > len(self.core.lines):
             return
-        self.line_browser.setCurrentRow(self.line_view_idx)
-        sources, line, preview_segments = self.core.load_line(self.line_idx)
+        try:
+            sources, line, preview_segments = self.core.load_line(self.line_idx)
+            self.line_browser.setCurrentRow(self.line_view_idx)
+        except FileNotFoundError as e:
+            logger.error(e)
+            return
         self.character_field.setText(line['parse']['char'])
         self.mood_field.setText(line['parse']['emotion'])
         self.ts_display.setText(f"Start: {float(line['ts']):.7f}")
