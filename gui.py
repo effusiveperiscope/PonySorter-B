@@ -34,7 +34,7 @@ class PonySorter_B_GUI(QMainWindow):
             assert offset == 1 or offset == -1
             if not len(self.core.loaded_sig):
                 return
-            ordered_eps = self.core.get_sigs_ordered_by_episode()
+            ordered_eps = self.core.get_sigs_ordered()
             idxof = ordered_eps.index(self.core.loaded_sig)
             if offset == -1 and idxof == 0:
                 return # noop
@@ -441,39 +441,60 @@ class PonySorter_B_GUI(QMainWindow):
         dialog.setWindowTitle('Load source audio (episode)')
         layout = QVBoxLayout(dialog)
 
-        # Season/episodes
-        season_box, self.season_field = self.labeled_field(
-            "Season", QComboBox())
-        ep_box, self.ep_field = self.labeled_field(
-            "Episode", QComboBox())
         season_ep_frame = QFrame()
         season_ep_lay = QVBoxLayout(season_ep_frame)
-        season_ep_lay.addWidget(season_box)
-        season_ep_lay.addWidget(ep_box)
 
-        # Seasons
-        seasons = []
-        episodes = {}
-        for sig in self.core.get_season_ep_sigs():
-            season_num = int(sig[1:3])
-            if not season_num in episodes:
-                episodes[season_num] = []
-            episodes[season_num].append(sig)
-            if season_num in seasons:
-                continue
-            seasons.append(season_num)
-            self.season_field.addItem(str(season_num))
+        if self.core.is_orderable():
+            # Season/episodes
+            season_box, self.season_field = self.labeled_field(
+                "Season", QComboBox())
+            ep_box, self.ep_field = self.labeled_field(
+                "Episode", QComboBox())
+            season_ep_lay.addWidget(season_box)
+            season_ep_lay.addWidget(ep_box)
 
-        # Load episode callback
-        def load_episodes(i):
-            self.ep_field.clear()
-            for ep in episodes[seasons[i]]:
-                ep_num = int(ep[4:6])
-                self.ep_field.addItem(str(ep_num), ep)
+            # Seasons
+            seasons = []
+            episodes = {}
+            for sig in self.core.get_season_ep_sigs():
+                season_num = int(sig[1:3])
+                if not season_num in episodes:
+                    episodes[season_num] = []
+                episodes[season_num].append(sig)
+                if season_num in seasons:
+                    continue
+                seasons.append(season_num)
+                self.season_field.addItem(str(season_num))
 
-        self.season_field.currentIndexChanged.connect(load_episodes)
-        if len(seasons):
-            load_episodes(0)
+            # Load episode callback
+            def load_episodes(i):
+                self.ep_field.clear()
+                for ep in episodes[seasons[i]]:
+                    ep_num = int(ep[4:6])
+                    self.ep_field.addItem(str(ep_num), ep)
+
+            self.season_field.currentIndexChanged.connect(load_episodes)
+            if len(seasons):
+                load_episodes(0)
+
+            def load_selection():
+                sig = self.ep_field.currentData()
+                self.load_selection(sig, update_progress)
+                dialog.accept()
+
+        else:
+            # Unorderable
+            audio_box, self.audio_field = self.labeled_field(
+                "Audio", QComboBox())
+            season_ep_lay.addWidget(audio_box)
+
+            for sig in self.core.get_sigs():
+                self.audio_field.addItem(sig, sig)
+
+            def load_selection():
+                sig = self.audio_field.currentData()
+                self.load_selection(sig, update_progress)
+                dialog.accept()
 
         layout.addWidget(season_ep_frame)
 
@@ -486,11 +507,6 @@ class PonySorter_B_GUI(QMainWindow):
 
         def update_progress(i):
             progress_bar.setValue(i)
-
-        def load_selection():
-            sig = self.ep_field.currentData()
-            self.load_selection(sig, update_progress)
-            dialog.accept()
 
         load_button = QPushButton("Load")
         load_button.clicked.connect(load_selection)

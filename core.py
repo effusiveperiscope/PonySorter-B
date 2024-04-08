@@ -36,11 +36,22 @@ def gather_available_audio(conf):
                         continue
                     index[sig][tag] = os.path.join(root,f)
             else:
-                assert len(f.split('_')) <= 2
-                sig = f.removesuffix('.flac').split('_')[0]
-                index[sig] = {
-                    'schema': 'custom'
-                }
+                parent = Path(root)
+                known_prefix = min((fp for fp in parent.glob('*') if fp.is_file()), key=lambda x: len(str(x))).stem
+                sig = known_prefix
+                tag = f.removeprefix(known_prefix).removesuffix('.flac').removeprefix('_')
+                if tag == 'master_ver' or tag == 'orig':
+                    logger.warn(f'Reserved tag {tag} found on '
+                        f'{os.path.join(root,f)}, skipping this file')
+                    continue
+                if not sig in index:
+                    index[sig] = {
+                        'schema': 'custom'
+                    }
+                if not len(tag):
+                    index[sig]['orig'] = os.path.join(root,f)
+                else:
+                    index[sig][tag] = os.path.join(root,f)
     return index
 
 def subsegment(source, line):
@@ -84,11 +95,17 @@ class PonySorter_B:
     def is_loaded(self):
         return hasattr(self,'lines')
 
+    def is_orderable(self):
+        return all([sigcat(x) is not None for x in self.audios_index.keys()])
+
     def get_sigs(self):
         return self.audios_index.keys()
 
-    def get_sigs_ordered_by_episode(self):
-        return sorted(self.audios_index.keys(), key=lambda s: sigcat(s))
+    def get_sigs_ordered(self):
+        if self.is_orderable():
+            return sorted(self.audios_index.keys(), key=lambda s: sigcat(s))
+        else:
+            return sorted(self.get_sigs())
 
     def get_season_ep_sigs(self):
         return [k for k,v in self.audios_index.items() if v[
@@ -97,7 +114,7 @@ class PonySorter_B:
     def key_transform(self, sig):
         if sig not in self.audios_index:
             return sig
-        if self.audios_index[sig]['schema'] == 'episode': # keyerror 's01e01
+        if self.audios_index[sig]['schema'] == 'episode': 
             return sig_to_labels_key(sig)
         else:
             return sig
@@ -137,6 +154,8 @@ class PonySorter_B:
 
             self.sources[tag] = AudioSegment.from_file(
                 longpath(path))
+            print(tag, self.sources[tag].duration_seconds)
+            # Why does there seem to be different time offsets for each
             if load_callback is not None:
                 load_callback(int((i)/(len_items-1)*100))
         logger.info(f'Loaded {sig}')
@@ -152,11 +171,12 @@ class PonySorter_B:
         master_file_path = master_file_path.replace(
             'MASTER_FILE_2', self.conf['master_file_2'])
         preview_segments = OrderedDict()
-        if not os.path.exists(master_file_path):
+        if not os.path.exists(longpath(master_file_path)):
             raise FileNotFoundError(f'Could not find master file {master_file_path}')
         preview_segments['master_ver'] = AudioSegment.from_file(
             longpath(master_file_path))
         for tag,source in self.sources.items():
+            #print("preview", source, line)
             preview_segments[tag] = subsegment(source, line)
         if 'orig' in preview_segments:
             # I think Original should be last because it's the least common
@@ -238,9 +258,9 @@ class PonySorter_B:
                     'MASTER_FILE_2', exp_dir)
                 expected_parent = Path(expected_save_path).parent
                 # Reset sig tree if parent exists
-                if os.path.exists(expected_parent):
+                if os.path.exists(longpath(expected_parent)):
                     try:
-                        shutil.rmtree(expected_parent)
+                        shutil.rmtree(longpath(expected_parent))
                     except PermissionError as e:
                         logger.error(e)
                         self.load_sig(old_loaded_sig)

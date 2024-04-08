@@ -63,6 +63,8 @@ def transcript_transform_path(path):
 
 def sigcat(sig):
     nums = re.findall(r'\d+',sig)
+    if not len(nums):
+        return None
     return int(''.join(nums))
 
 from tqdm import tqdm

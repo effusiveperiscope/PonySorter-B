@@ -83,12 +83,12 @@ def merge_dialog():
                 if not sig in orig_data.keys():
                     logger.warn(f"Mismatched key in modified:"
                     f" {sig} in modified, not in original")
-                    return
+                    continue
                 if mod_data[sig] == orig_data[sig]:
                     continue
                 if sig in modified_sigs:
                     logger.warn(f"Modification collision: {f}"
-                        f" and {modified_sigs[sig]}")
+                        f" and {modified_sigs[sig]} on {sig}")
                 modified_sigs[sig] = f
                 new_index[sig] = mod_data[sig]
 
