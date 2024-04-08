@@ -6,15 +6,13 @@ don't need it.
 * If you are installing in python/conda, `pip install -r requirements.txt`. On
   Windows you can download an appropriate release.
 * In `config.yaml`, modify `master_file_1` to point to master file 1, or the
-  directory enclosing `Sliced dialogue`. `PonySorter_B` relies on the directory
-  structure following that of the master file. master_file_2 is currently unused
-  and can be left empty.
+  directory enclosing `Sliced dialogue`. Modify `master_file_2` to point to
+  master file 2. `PonySorter_B` relies on the directory structure following that
+  of the master files.
 
 * Add episode tracks (i.e. `s01e01_demu0.flac`), processed and unprocessed, in
-  `in_audio`. They can be located anywhere in any subdirectory of `in_audio` as
-  long as they follow the signature `s**e**_*optional tag*.flac`, e.g.
-  `s01e01.flac` or `s01e01_demu0.flac`. Text after the underscore is interpreted
-  as a label for classification purposes. Currently tracks of interest are
+  `in_audio`. The current search for classifying tracks relies on alternative
+  versions of tracks being located inside the same folder. Currently tracks of interest are
   hosted
   [here](https://drive.google.com/drive/folders/1CY2c7oW3KRPsyta-EyTlpvo8zeccQjCy).
 
