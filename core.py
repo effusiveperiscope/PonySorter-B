@@ -274,7 +274,7 @@ class PonySorter_B:
                 orig_file_transcript = transcript_transform_path(orig_file)
                 assert os.path.exists(longpath(orig_file_transcript)), orig_file_transcript
 
-                save_path = path_reparse(line['orig_file'], line['parse'])
+                save_path = path_reparse(line['orig_file'], line['parse'], line['ts'])
                 save_path = save_path.replace('\\','/')
                 save_path = save_path.replace('MASTER_FILE_1', exp_dir)
                 save_path = save_path.replace('MASTER_FILE_2', exp_dir)
@@ -323,14 +323,14 @@ class PonySorter_B:
                 if do_audacity_write:
                     if not tag in tag_file_handles:
                         tag_file_handles[tag] = open(label_file, 'w')
-                new_label = label_reparse(line['label'], line['parse'])
+                new_label = label_reparse(line['label'], line['parse'], line['ts'])
                 key = self.key_transform(sig)
                 new_index[key]['lines'][j].pop('original_noise')
                 new_index[key]['lines'][j].pop('original_char')
                 new_index[key]['lines'][j].pop('selected_tag')
                 new_index[key]['lines'][j]['label'] = new_label
                 new_index[key]['lines'][j]['orig_file'] = path_reparse(
-                    line['orig_file'], line['parse'])
+                    line['orig_file'], line['parse'], line['ts'])
                 if do_audacity_write:
                     tag_file_handles[tag].write(
                         str(line['ts'])+'\t'+str(line['te'])+'\t'+

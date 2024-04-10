@@ -33,16 +33,26 @@ def mergedicts(dict1, dict2):
         else:
             yield (k, dict2[k])
 
-def label_reparse(label, parse_src):
+def convert_decimal_seconds_to_hh_mm_ss(timestamp):
+    hours = int(timestamp / 3600)
+    minutes = int((timestamp % 3600) / 60)
+    seconds = int(timestamp % 60)
+    return hours, minutes, seconds
+
+def label_reparse(label, parse_src, timestamp):
     sp = label.split('_')
+    h,m,s = convert_decimal_seconds_to_hh_mm_ss(timestamp)
+    sp[0] = f'{h:02d}'
+    sp[1] = f'{m:02d}'
+    sp[2] = f'{s:02d}'
     sp[3] = parse_src['char']
     sp[5] = parse_src['noise']
     return '_'.join(sp)
 
-def path_reparse(orig_file, parse_src):
+def path_reparse(orig_file, parse_src, timestamp):
     parent = Path(orig_file).parent
     name = Path(orig_file).name
-    out_path = parent / label_reparse(name, parse_src)
+    out_path = parent / label_reparse(name, parse_src, timestamp)
     return str(out_path)
 
 qwertymap0 = '1234567890'
