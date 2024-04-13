@@ -196,7 +196,12 @@ def stats_dialog(cur_core, exp_dir):
     aggregate_dict = reduce(sum_stats, (s for s in stats_dict.values()))
 
     stats_pairs = [(k,v) for k,v in stats_dict.items()]
-    stats_pairs = sorted(stats_pairs, key=lambda x: sigcat(x[0]))
+
+    #print ([sigcat(x) for x in cur_core.modified_index.keys()])
+    if all([sigcat(x) is not None for x in cur_core.modified_index.keys()]):
+        stats_pairs = sorted(stats_pairs, key=lambda x: sigcat(x[0]))
+    else:
+        stats_pairs = sorted(stats_pairs, key=lambda x: x[0])
     stats_dict = {x[0]:x[1] for x in stats_pairs}
 
     props_dict = {k:props_stats(v) for k,v in stats_dict.items()}

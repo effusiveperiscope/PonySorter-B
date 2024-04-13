@@ -34,9 +34,9 @@ def mergedicts(dict1, dict2):
             yield (k, dict2[k])
 
 def convert_decimal_seconds_to_hh_mm_ss(timestamp):
-    hours = int(timestamp / 3600)
-    minutes = int((timestamp % 3600) / 60)
-    seconds = int(timestamp % 60)
+    hours = int(float(timestamp) / 3600)
+    minutes = int((float(timestamp) % 3600) / 60)
+    seconds = int(float(timestamp) % 60)
     return hours, minutes, seconds
 
 def label_reparse(label, parse_src, timestamp):
