@@ -17,7 +17,7 @@ from log import display_handler, logger
 from core import PonySorter_B
 from utils import key_shift, qwertymap0, qwertymap1, qwertymap2
 from screenless import sl_hook
-from stats import stats_dialog
+from stats import stats_dialog, stats_dialog_2
 
 class PonySorter_B_GUI(QMainWindow):
     def __init__(self, conf):
@@ -156,6 +156,9 @@ class PonySorter_B_GUI(QMainWindow):
 
         stats_action = self.menu_bar.addAction("View stats")
         # deferred connect
+
+        #stats_2_action = self.menu_bar.addAction("View stats 2")
+        #stats_2_action.triggered.connect(stats_dialog_2)
 
         def import_from_labels_dialog():
             dialog = QDialog()

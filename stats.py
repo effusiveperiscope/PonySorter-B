@@ -303,3 +303,144 @@ def stats_dialog(cur_core, exp_dir):
     #pdb.set_trace()
 
     dialog.exec_()
+
+# No modified_line -- doesn't distinguish between variants
+def compare_sigs2(orig_sig, new_sig):
+    orig_lines = orig_sig['lines']
+
+    stats = {}
+    stats['convs'] = {}
+    stats['convs']['noisy_to_clean'] = 0
+    stats['convs']['noisy_to_noisy'] = 0
+    stats['convs']['very_noisy_to_clean'] = 0
+    stats['convs']['very_noisy_to_noisy'] = 0
+    stats['totals'] = {}
+    stats['totals']['total'] = len(orig_lines)
+    stats['totals']['modified'] = 0
+    stats['totals']['clean_pre'] = 0
+    stats['totals']['noisy_pre'] = 0
+    stats['totals']['very_noisy_pre'] = 0
+    stats['totals']['clean_post'] = 0
+    stats['totals']['noisy_post'] = 0
+    stats['totals']['very_noisy_post'] = 0
+
+    first_modified_line = None
+    for line_idx, orig_line in enumerate(orig_lines):
+        new_line = new_sig['lines'][line_idx]
+        line_idx = str(line_idx)
+
+        if new_line['parse']['noise'] != orig_line['parse']['noise']:
+            if new_line['parse']['noise'] not in {'', 'Noisy', 'Very Noisy'}:
+                logger.warn(f'CHECK {new_line}')
+            if orig_line['parse']['noise'] not in {'', 'Noisy', 'Very Noisy'}:
+                logger.warn(f'CHECK {new_line}')
+            stats['totals']['modified'] += 1
+            if first_modified_line is None:
+                first_modified_line = (orig_line, new_line)
+
+        if new_line['parse']['noise'] == '':
+            stats['totals']['clean_post'] += 1
+        elif new_line['parse']['noise'] == 'Noisy':
+            stats['totals']['noisy_post'] += 1
+        elif new_line['parse']['noise'] == 'Very Noisy':
+            stats['totals']['very_noisy_post'] += 1
+        else:
+            logger.warn(f'CHECK {new_line}')
+
+        if orig_line['parse']['noise'] == '':
+            stats['totals']['clean_pre'] += 1
+        elif orig_line['parse']['noise'] == 'Noisy':
+            stats['totals']['noisy_pre'] += 1
+        elif orig_line['parse']['noise'] == 'Very Noisy':
+            stats['totals']['very_noisy_pre'] += 1
+        else:
+            logger.warn(f'CHECK {new_line}')
+
+    return stats, first_modified_line
+
+# Code for comparing multiple index files
+def stats_dialog_2():
+    dialog = QDialog()
+    dialog.setWindowTitle('Calculate statistics for current project')
+    dialog_lay = QVBoxLayout(dialog)
+
+    index_pairs = {'episodes_labels_index.json' : 'episodes_labels_index_v2.json' ,
+    'extras_labels_index.json' : 'merged_labels_eqg.json'}
+    #index_pairs = {'episodes_labels_index.json' : 'labels_s6.json'}
+    aggregates = []
+    empty_modified = []
+    modified_sum = 0
+    for i1,i2 in index_pairs.items():
+        with open(i1, 'r') as f:
+            index1 = json.load(f)
+        with open(i2, 'r') as f:
+            index2 = json.load(f)
+        stats_dict = {}
+        set_diff = set()
+        if not set(index1.keys()) == set(index2.keys()):
+            logger.warn(f'Keys in {i1} and {i2} do not match!')
+            set_diff = set(index1.keys()).symmetric_difference(set(index2.keys()))
+            logger.warn(f'Unique keys will be skipped: {set_diff}')
+
+        for sig in index1.keys():
+            if sig in set_diff: # skip if not in both
+                continue
+            if len(index1[sig]['lines']) == 0 or len(index2[sig]['lines']) == 0:
+                print(f"Skipping sig {sig}, empty lines")
+                continue
+            if len(index1[sig]['lines']) != len(index2[sig]['lines']):
+                logger.warn('Line count does not match, skipping')
+                logger.warn(f'{sig} has {len(index1[sig]["lines"])} lines in {i1}')
+                logger.warn(f'{sig} has {len(index2[sig]["lines"])} lines in {i2}')
+                continue
+            #print(f"Comparing sig {sig}")
+            stats, first_modified_line = compare_sigs2(index1[sig], index2[sig])
+            stats_dict[sig] = stats
+
+            if stats['totals']['modified'] == 0:
+                logger.warn(f"No modified lines for sig {sig}")
+                empty_modified.append(sig)
+            print(f"Sig {sig} has {stats['totals']['modified']} modified lines of {stats['totals']['total']}")
+            modified_sum += stats['totals']['modified']
+            #if first_modified_line is not None:
+            #    print(f"First modified line: {first_modified_line}")
+
+        aggregate_dict = reduce(sum_stats, (s for s in stats_dict.values()))
+        aggregates.append(aggregate_dict)
+        
+    sumstats = sum_stats(aggregates[0], aggregates[1])
+    print(sumstats)
+    print(modified_sum)
+
+    # What were the balances of clean/noisy/very noisy pre and post?
+    fig2 = Figure(figsize=(16,10), dpi=80)
+    canv = FigureCanvas(fig2)
+    ax = fig2.add_subplot(111)
+
+    data = sumstats
+
+    # Extract the pre and post counts
+    clean_counts = [data['totals']['clean_pre'], data['totals']['clean_post']]
+    noisy_counts = [data['totals']['noisy_pre'], data['totals']['noisy_post']]
+    very_noisy_counts = [data['totals']['very_noisy_pre'], data['totals']['very_noisy_post']]
+
+    # Define the labels for the categories
+    labels = ['Pre','Post']
+
+    # Create a color map
+    cmap = cm.viridis_r
+
+    # Create the stacked bar chart
+    ax.bar(labels, clean_counts, label='Clean', color=cmap(0))
+    ax.bar(labels, noisy_counts, bottom=clean_counts, label='Noisy', color=cmap(0.33))
+    ax.bar(labels, very_noisy_counts, bottom=np.array(clean_counts) + np.array(noisy_counts), label='Very Noisy', color=cmap(0.76))
+
+    # Add labels, title, and legend
+    ax.set_ylabel('Counts')
+    ax.set_title('Noise quality, pre and post')
+    ax.legend(bbox_to_anchor=(1.1,1.05), ncol=3)
+    dialog_lay.addWidget(canv)
+
+    #print(f"Unmodified: {empty_modified}")
+    dialog.exec_()
+    pass
